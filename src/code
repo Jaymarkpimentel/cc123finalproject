@@ -1,1 +1,118 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#define FILE_NAME "students.txt"
+
+struct Student {
+    int id;
+    char name[50];
+    float grade1, grade2, grade3, average;
+};
+
+void computeAverage(struct Student *s) {
+    s->average = (s->grade1 + s->grade2 + s->grade3) / 3.0;
+}
+
+void addStudent(struct Student *students, int *count) {
+    if (*count >= 100) {
+        printf("Limit reached!\n");
+        return;
+    }
+
+    printf("Enter ID: ");
+    scanf("%d", &students[*count].id);
+    printf("Enter Name: ");
+    scanf(" %[^\n]", students[*count].name);
+    printf("Enter 3 grades: ");
+    scanf("%f %f %f", &students[*count].grade1, &students[*count].grade2, &students[*count].grade3);
+
+    computeAverage(&students[*count]);
+    (*count)++;
+    printf("Student added!\n");
+}
+
+void deleteStudent(struct Student *students, int *count) {
+    int id, i, found = 0;
+    if (*count == 0) {
+        printf("No students to delete.\n");
+        return;
+    }
+
+    printf("Enter Student ID to delete: ");
+    scanf("%d", &id);
+
+    for (i = 0; i < *count; i++) {
+        if (students[i].id == id) {
+            found = 1;
+            for (int j = i; j < *count - 1; j++) {
+                students[j] = students[j + 1];
+            }
+            (*count)--;
+            printf("Student deleted successfully!\n");
+            break;
+        }
+    }
+    if (!found) printf("Student ID not found!\n");
+}
+
+void displayStudents(struct Student *students, int count) {
+    if (count == 0) {
+        printf("No records found.\n");
+        return;
+    }
+
+    for (int i = 0; i < count; i++) {
+        printf("\nID: %d\nName: %s\nAverage: %.2f\n", students[i].id, students[i].name, students[i].average);
+    }
+}
+
+void saveToFile(struct Student *students, int count) {
+    FILE *file = fopen(FILE_NAME, "w");
+    if (!file) return;
+
+    for (int i = 0; i < count; i++)
+        fprintf(file, "%d %s %.2f\n", students[i].id, students[i].name, students[i].average);
+
+    fclose(file);
+    printf("Records saved!\n");
+}
+
+void loadFromFile(struct Student *students, int *count) {
+    FILE *file = fopen(FILE_NAME, "r");
+    if (!file) return;
+
+    *count = 0;
+    while (fscanf(file, "%d %[^\n] %f", &students[*count].id, students[*count].name, &students[*count].average) == 3)
+        (*count)++;
+
+    fclose(file);
+}
+
+int main() {
+    struct Student students[100];
+    int count = 0, choice;
+    
+    printf("Student Info");
+
+    loadFromFile(students, &count);
+
+    while (1) {
+        printf("\n1. Add Student\n2. Display Students\n3. Delete Student\n4. Save & Exit\nChoice: ");
+        scanf("%d", &choice);
+
+        if (choice == 1)
+            addStudent(students, &count);
+        else if (choice == 2)
+            displayStudents(students, count);
+        else if (choice == 3)
+            deleteStudent(students, &count);
+        else if (choice == 4) {
+            saveToFile(students, count);
+            break; 
+        } else
+            printf("Invalid choice!\n");
+    }
+
+    return 0;
+}
